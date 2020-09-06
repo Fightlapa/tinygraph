@@ -645,4 +645,62 @@ bool isPlanar(const Graph& g) {
     return ans;
 }
 
+bool isMeynielExtend(const Graph& g, int l, int r, Set out, int innerEdgesCount, Set verticesInCycle) {
+    int lEdges, rEdges;
+    Set lPool = g.neighbors(l) - out;
+    Set rPool = g.neighbors(r) - out;
+    for (int l2 : lPool) {
+        lEdges = 0;
+        for (int u : (verticesInCycle - l))
+        {
+            if (g.hasEdge(l2, u))
+            {
+                ++lEdges;
+            }
+        }
+        for (int r2 : (rPool - l2))
+        {
+            rEdges = 0;
+            for (int u : (verticesInCycle - r))
+            {
+                if (g.hasEdge(r2, u))
+                {
+                    ++rEdges;
+                }
+            }
+            if (g.hasEdge(r2, l2))
+            {
+                if (innerEdgesCount + lEdges + rEdges < 2)
+                {
+                    return false;
+                }
+                else
+                {
+                    ++rEdges;
+                }
+            }
+            if (!isMeynielExtend(g, l2, r2, (out + l2 + r2), innerEdgesCount + lEdges + rEdges, verticesInCycle + l2 + r2))
+                return false;
+        }
+    }
+    return true;
+}
+
+
+bool isMeyniel(const Graph& g) {
+    int innerEdgesCount = 0;
+    for (int u = 0; u < g.n() - 4; ++u) {
+        for (int l : g.neighbors(u).above(u)) {
+            for (int r : g.neighbors(u).above(l)) {
+                innerEdgesCount = g.hasEdge(l, r) ? 1 : 0;
+                Set out = g.vertices().belowEq(u) + l + r;
+                if (!isMeynielExtend(g, l, r, out, innerEdgesCount, Set({u, r, l})))
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 }  // namespace Classes
