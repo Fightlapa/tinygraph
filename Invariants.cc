@@ -23,7 +23,59 @@
 
 namespace Invariants {
 
-bool kColorable(const Graph& g, int k, const Set options[], Set uncolored) {
+// return value MAXN indicates disconnected graph
+int diameter(const Graph& g) {
+    if (g.n() == 0)
+	return g.n();
+    int diameter = 0;
+    for (int u : g.vertices()) {
+	Set seen = {u};
+	Set layer = {u};
+	int d = 0;
+	for (; ; ++d) {
+	    Set nextLayer;
+	    for (int v : layer)
+		nextLayer |= g.neighbors(v);
+	    nextLayer -= seen;
+	    if (nextLayer.isEmpty())
+		break;
+	    seen |= nextLayer;
+	    layer = nextLayer;
+	}
+	if (seen != g.vertices())
+	    return Graph::maxn();
+	diameter = std::max(diameter, d);
+    }
+    return diameter;
+}
+
+// return value MAXN indicates disconnected graph
+int radius(const Graph& g) {
+    if (g.n() == 0)
+	return g.n();
+    int radius = Graph::maxn();
+    for (int u : g.vertices()) {
+	Set seen = {u};
+	Set layer = {u};
+	int d = 0;
+	for (; ; ++d) {
+	    Set nextLayer;
+	    for (int v : layer)
+		nextLayer |= g.neighbors(v);
+	    nextLayer -= seen;
+	    if (nextLayer.isEmpty())
+		break;
+	    seen |= nextLayer;
+	    layer = nextLayer;
+	}
+	if (seen != g.vertices())
+	    return 0;
+	radius = std::min(radius, d);
+    }
+    return radius;
+}
+
+bool kColorable(const Graph& g, int k, const Set options[], Set uncolored, Set freshColors) {
     if (uncolored.isEmpty())
 	return true;
     int leastOptions = k + 1;
@@ -37,7 +89,14 @@ bool kColorable(const Graph& g, int k, const Set options[], Set uncolored) {
 	}
     }
     assert(v != -1);
-    for (int c : options[v]) {
+
+    Set v_options =  options[v];
+    if (options[v] == freshColors) {
+	const auto c = freshColors.min();
+	v_options = Set({c});
+	freshColors -= c;
+    }
+    for (int c : v_options) {
 	Set options2[g.n()];
 	std::memcpy(options2, options, sizeof options2);
 	options2[v] = Set({c});
@@ -46,7 +105,7 @@ bool kColorable(const Graph& g, int k, const Set options[], Set uncolored) {
 	    if (options2[u].isEmpty())
 		return false;
 	}
-	if (kColorable(g, k, options2, uncolored - v))
+	if (kColorable(g, k, options2, uncolored - v, freshColors))
 	    return true;
     }
     return false;
@@ -57,6 +116,8 @@ bool kColorable(const Graph& g, int k) {
 	return g.n() == 0;
     if (k == 1)
 	return Classes::isIndependentSet(g);
+    if (k == 2)
+	return Classes::isBipartite(g);
     if (g.n() <= k)
 	return true;
     Set options[g.n()];
@@ -65,7 +126,7 @@ bool kColorable(const Graph& g, int k) {
     options[0] = Set({0});
     for (int u : g.neighbors(0))
 	options[u] -= 0;
-    return kColorable(g, k, options, g.vertices() - 0);
+    return kColorable(g, k, options, g.vertices() - 0, Set::ofRange(k) - 0);
 }
 
 int coloringNumber(const Graph& g) {

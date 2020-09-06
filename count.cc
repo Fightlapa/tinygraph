@@ -57,6 +57,23 @@ std::map<std::string, Property> properties = {
     {"7-colorable",   {[](const Graph& g) { return Invariants::kColorable(g, 7); }, true,  true}},
     {"8-colorable",   {[](const Graph& g) { return Invariants::kColorable(g, 8); }, true,  true}},
     {"9-colorable",   {[](const Graph& g) { return Invariants::kColorable(g, 9); }, true,  true}},
+    {"radius-2",      {[](const Graph& g) { return Invariants::radius(g) == 2; }, false, false}},
+    {"diameter-2",    {[](const Graph& g) { return Invariants::diameter(g) == 2; }, false, false}},
+    {"diameter-3",    {[](const Graph& g) { return Invariants::diameter(g) == 3; }, false, false}},
+    {"diameter-4",    {[](const Graph& g) { return Invariants::diameter(g) == 4; }, false, false}},
+    {"diameter-5",    {[](const Graph& g) { return Invariants::diameter(g) == 5; }, false, false}},
+    {"diameter-6",    {[](const Graph& g) { return Invariants::diameter(g) == 6; }, false, false}},
+    {"diameter-7",    {[](const Graph& g) { return Invariants::diameter(g) == 7; }, false, false}},
+    {"diameter-8",    {[](const Graph& g) { return Invariants::diameter(g) == 8; }, false, false}},
+    {"diameter-9",    {[](const Graph& g) { return Invariants::diameter(g) == 9; }, false, false}},
+    {"diameter<=2",   {[](const Graph& g) { return Invariants::diameter(g) <= 2; }, false, false}},
+    {"diameter<=3",   {[](const Graph& g) { return Invariants::diameter(g) <= 3; }, false, false}},
+    {"diameter<=4",   {[](const Graph& g) { return Invariants::diameter(g) <= 4; }, false, false}},
+    {"diameter<=5",   {[](const Graph& g) { return Invariants::diameter(g) <= 5; }, false, false}},
+    {"diameter<=6",   {[](const Graph& g) { return Invariants::diameter(g) <= 6; }, false, false}},
+    {"diameter<=7",   {[](const Graph& g) { return Invariants::diameter(g) <= 7; }, false, false}},
+    {"diameter<=8",   {[](const Graph& g) { return Invariants::diameter(g) <= 8; }, false, false}},
+    {"diameter<=9",   {[](const Graph& g) { return Invariants::diameter(g) <= 9; }, false, false}},
     {"P4-sparse",     {Classes::isP4Sparse,                                         true,  true}},
     {"bipartite",     {Classes::isBipartite,                                        true,  true}},
     {"chordal",       {Classes::isChordal,                                          true,  true}},
@@ -81,6 +98,7 @@ std::map<std::string, Property> properties = {
     {"Hoang",         {Classes::isHoang,                                            true,  true}},
     {"two-split",     {Classes::isTwoSplit,                                         true,  false}},
     {"planar",        {Classes::isPlanar,                                           true,  true}},
+    {"cograph",       {Classes::isCograph,                                          true,  true}},
     {"two-edge-connected",              {Classes::isTwoEdgeConnected,               false, false}},
     {"minimally-two-edge-connected",    {Classes::isMinimallyTwoEdgeConnected,      false, false}},
     {"minimally-two-vertex-connected",  {Classes::isMinimallyTwoVertexConnected,    false, false}},
@@ -123,12 +141,12 @@ int main(int argc, char* argv[]) {
     std::string propertyName = "";
     int gengFlags = 0;
     int i = 1;
-    bool countLabelled = false;
+    bool countLabeled = false;
     if (i < argc && std::string(argv[i]) == "-l") {
-	countLabelled = true;
+	countLabeled = true;
 	++i;
     }
-    bool determinedByConnectedComponents = !countLabelled;
+    bool determinedByConnectedComponents = !countLabeled;
     for (; i < argc; ++i) {
 	std::string type = argv[i];
 	PropertyTest test = 0;
@@ -187,7 +205,7 @@ int main(int argc, char* argv[]) {
     bool doPrune = hereditary && propertyTest;
     if (!propertyTest)
 	propertyTest = [](const Graph&) { return true; };
-    std::vector<uint64_t> counts;
+    std::vector<bignum> counts;
     std::vector<double> times;
     for (int n = 0; n <= MAXN; ++n) {
 	auto tStart = double(std::clock()) / CLOCKS_PER_SEC;
@@ -202,10 +220,10 @@ int main(int argc, char* argv[]) {
 	} else {
 	    std::cerr << std::endl;
 	}
-	uint64_t count = 0;
-	auto counter = [&count,&propertyTest,&countLabelled](const Graph& g) {
+	bignum count = 0;
+	auto counter = [&count,&propertyTest,&countLabeled](const Graph& g) {
 			   if (propertyTest(g))
-			       count += countLabelled ? g.numLabeledGraphs() : 1;
+			       count += countLabeled ? g.numLabeledGraphs() : 1;
 		       };
 	if (doPrune) {
 	    Graph::enumerate(n, counter, std::not1(propertyTest), gengFlags);
@@ -217,12 +235,12 @@ int main(int argc, char* argv[]) {
 	double t = tEnd - tStart;
 	times.push_back(t);
 	std::cerr << "time: " << t << 's' << std::endl;
-	std::string un = countLabelled ? "" : "un";
+	std::string un = countLabeled ? "" : "un";
 	if (connectedOnly && !determinedByConnectedComponents) {
 	    std::cout << "number of connected " << propertyName
 		      << " undirected " << un << "labeled graph on n vertices:\n"
 		      << counts << std::endl;
-	    if (!countLabelled)
+	    if (!countLabeled)
 		std::cout << "number of connected non-" << propertyName
 			  << " undirected " << un << "labeled graph on n vertices:\n"
 			  << EulerTransform::connectedNonGraphs(counts) << std::endl;
@@ -230,7 +248,7 @@ int main(int argc, char* argv[]) {
 	    std::cout << "number of " << propertyName
 		      << " undirected " << un << "labeled graph on n vertices:\n"
 		      << counts << std::endl;
-	    if (!countLabelled)
+	    if (!countLabeled)
 		std::cout << "number of non-" << propertyName
 			  << " undirected " << un << "labeled graph on n vertices:\n"
 			  << EulerTransform::nonGraphs(counts) << std::endl;
@@ -239,7 +257,7 @@ int main(int argc, char* argv[]) {
 	    std::cout << "number of " << propertyName
 		      << " undirected " << un << "labeled graph on n vertices:\n"
 		      << countsGeneral << std::endl;
-	    if (!countLabelled) {
+	    if (!countLabeled) {
 		std::cout << "number of non-" << propertyName
 			  << " undirected " << un << "labeled graph on n vertices:\n"
 			  << EulerTransform::nonGraphs(countsGeneral) << std::endl;

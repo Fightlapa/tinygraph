@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-EXECS	  = count extremal ssge-approx p5editing forbidden-subgraphs
+EXECS	  = count count-table extremal ssge-approx p5editing forbidden-subgraphs
 
 CC	  = gcc
 CXX	  = g++
@@ -32,24 +32,27 @@ all: .deps nauty $(EXECS)
 count: Classes.o Subgraph.o Invariants.o EulerTransform.o $(COMMON_OBJ) count.o
 	$(CXX) $(CXXFLAGS) $^ $(GMP_LIBS) -o $@
 
+count-table: Classes.o Subgraph.o Invariants.o EulerTransform.o $(COMMON_OBJ) count-table.o
+	$(CXX) $(CXXFLAGS) $^ $(GMP_LIBS) -o $@
+
 extremal: Subgraph.o $(COMMON_OBJ) extremal.o
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(GMP_LIBS) -o $@
 
 ssge-approx: ssge-approx.o $(COMMON_OBJ)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(GMP_LIBS) -o $@
 
 p5editing: p5editing.o $(COMMON_OBJ)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(GMP_LIBS) -o $@
 
 forbidden-subgraphs: forbidden-subgraphs.o Classes.o Invariants.o Subgraph.o $(COMMON_OBJ)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(GMP_LIBS) -o $@
 
 test: testMain
 	./testMain
 
 testMain: testMain.o testBits.o testSet.o testClasses.o testSubgraph.o testEulerTransform.o \
 		$(COMMON_OBJ) Invariants.o Classes.o Subgraph.o EulerTransform.o
-	$(CXX) $(CXXFLAGS) $(GMP_LIBS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(GMP_LIBS) -o $@
 
 Graph.o: nauty
 
