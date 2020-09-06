@@ -674,13 +674,11 @@ bool isMeynielExtend(const Graph& g, int l, int r, Set out, int innerEdgesCount,
                 {
                     return false;
                 }
-                else
-                {
-                    ++rEdges;
-                }
             }
-            if (!isMeynielExtend(g, l2, r2, (out + l2 + r2), innerEdgesCount + lEdges + rEdges, verticesInCycle + l2 + r2))
-                return false;
+	    else {
+                if (!isMeynielExtend(g, l2, r2, (out + l2 + r2), innerEdgesCount + lEdges + rEdges, verticesInCycle + l2 + r2))
+                    return false;
+	    }
         }
     }
     return true;
