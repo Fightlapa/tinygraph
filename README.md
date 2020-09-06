@@ -1,3 +1,7 @@
+# Code owner
+This code was created by Falk Hüffner‬. This is fork copy of original one, see: https://github.com/falk-hueffner/tinygraph.
+I've made only small changes and used existing code, all credit to original creator. 
+
 # tinygraph
 
 This C++11 project provides efficient data structures for
