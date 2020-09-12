@@ -700,5 +700,160 @@ bool isMeyniel(const Graph& g) {
     return true;
 }
 
+bool containsNonCrossingEdges(std::pair<int, int> newEdge, std::vector<std::pair<int, int>> edges)
+{
+	bool returnValue = false;
+    for (std::pair<int, int> edge : edges){
+        if (!(std::get<0>(newEdge) < std::get<0>(edge) && std::get<1>(newEdge) < std::get<1>(edge) && std::get<0>(edge) < std::get<1>(newEdge))
+                && !(std::get<0>(newEdge) > std::get<0>(edge) && std::get<1>(newEdge) > std::get<1>(edge) && std::get<1>(edge) > std::get<0>(newEdge)))
+        {
+			return true;
+        }
+    }
+    return returnValue;
+}
+
+
+bool gallaiExtend(const Graph& g, int l, int r, std::vector<int> lSide, std::vector<int> rSide,  Set out, std::vector<std::pair<int, int>> innerEdges, bool uncrossingEdgesFound, int u) {
+    Set lPool = g.neighbors(l) - out;
+    int i;
+    int lSideSize = static_cast<int>(lSide.size());
+    int rSideSize = static_cast<int>(rSide.size());
+    bool preL2UncrossingEdges = uncrossingEdgesFound;
+    for (int l2 : lPool) {
+        uncrossingEdgesFound = preL2UncrossingEdges;
+        std::vector<std::pair<int, int>> lEdges;
+        std::vector<int> newLSide(lSide);
+        newLSide.push_back(l2);
+
+		if (g.hasEdge(l2, u))
+		{
+			std::pair<int, int> newEdge(-lSideSize - 1, 0);
+			if (!uncrossingEdgesFound)
+			{
+				if (containsNonCrossingEdges(newEdge, lEdges) || containsNonCrossingEdges(newEdge, innerEdges))
+					uncrossingEdgesFound = true;
+			}
+			lEdges.push_back(newEdge);
+		}
+
+        for (i = 0; i < lSideSize - 1; ++i)
+        {
+            if (g.hasEdge(l2, lSide.at(i)))
+            {
+                std::pair<int, int> newEdge(-lSideSize - 1, -i - 1);
+    			if (!uncrossingEdgesFound)
+    			{
+					if (containsNonCrossingEdges(newEdge, lEdges) || containsNonCrossingEdges(newEdge, innerEdges))
+						uncrossingEdgesFound = true;
+    			}
+                lEdges.push_back(newEdge);
+            }
+        }
+        for (i = 0; i < rSideSize; ++i)
+        {
+            if (g.hasEdge(l2, rSide.at(i)))
+            {
+				std::pair<int, int> newEdge(-lSideSize - 1, i + 1);
+				if (!uncrossingEdgesFound)
+				{
+					if (containsNonCrossingEdges(newEdge, lEdges) || containsNonCrossingEdges(newEdge, innerEdges))
+						uncrossingEdgesFound = true;
+				}
+				lEdges.push_back(newEdge);
+            }
+        }
+        Set rPool = g.neighbors(r) - out - l2;
+        bool preR2UncrossingEdges = uncrossingEdgesFound;
+        for (int r2 : rPool)
+        {
+            uncrossingEdgesFound = preR2UncrossingEdges;
+			std::vector<std::pair<int, int>> rEdges;
+
+			if (g.hasEdge(r2, u))
+			{
+				std::pair<int, int> newEdge(0, rSideSize + 1);
+				if (!uncrossingEdgesFound)
+				{
+					if (containsNonCrossingEdges(newEdge, lEdges) || containsNonCrossingEdges(newEdge, innerEdges))
+						uncrossingEdgesFound = true;
+				}
+				rEdges.push_back(newEdge);
+			}
+
+            for (i = 0; i < lSideSize; ++i)
+            {
+                if (g.hasEdge(r2, lSide.at(i)))
+                {
+                    std::pair<int, int> newEdge(-i -1, rSideSize + 1);
+        			if (!uncrossingEdgesFound)
+        			{
+						if (containsNonCrossingEdges(newEdge, lEdges) || containsNonCrossingEdges(newEdge, rEdges) || containsNonCrossingEdges(newEdge, innerEdges))
+							uncrossingEdgesFound = true;
+        			}
+
+                    rEdges.push_back(newEdge);
+                }
+            }
+            for (i = 0; i < rSideSize - 1; ++i)
+            {
+                if (g.hasEdge(r2, rSide.at(i)))
+                {
+                    std::pair<int, int> newEdge(i + 1, rSideSize + 1);
+        			if (!uncrossingEdgesFound)
+        			{
+						if (containsNonCrossingEdges(newEdge, lEdges) || containsNonCrossingEdges(newEdge, rEdges) || containsNonCrossingEdges(newEdge, innerEdges))
+							uncrossingEdgesFound = true;
+        			}
+                    rEdges.push_back(newEdge);
+                }
+            }
+
+			if (g.hasEdge(r2, l2))
+			{
+				if (innerEdges.size() + lEdges.size() + rEdges.size() < 2 || !uncrossingEdgesFound)
+				{
+					return false;
+				}
+			}
+			else {
+				std::vector<std::pair<int, int>> newInnerEdges(innerEdges);
+				newInnerEdges.insert(newInnerEdges.end(), lEdges.begin(), lEdges.end());
+				newInnerEdges.insert(newInnerEdges.end(), rEdges.begin(), rEdges.end());
+				std::vector<int> newRSide(rSide);
+				newRSide.push_back(r2);
+				if (!gallaiExtend(g, l2, r2, newLSide, newRSide, (out + l2 + r2), newInnerEdges, uncrossingEdgesFound, u))
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+
+bool isGallai(const Graph& g) {
+    for (int u = 0; u < g.n() - 4; ++u) {
+        for (int l : g.neighbors(u).above(u)) {
+            std::vector<int> lSide;
+            lSide.push_back(l);
+            for (int r : g.neighbors(u).above(l)) {
+                std::vector<int> rSide;
+                std::vector<std::pair<int, int>> innerEdges;
+                if (g.hasEdge(l, r))
+                {
+                    innerEdges.push_back(std::pair<int, int>(-1, 1));
+                }
+                Set out = g.vertices().belowEq(u) + l + r;
+                rSide.push_back(r);
+                if (!gallaiExtend(g, l, r, lSide, rSide, out, innerEdges, false, u))
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
 
 }  // namespace Classes

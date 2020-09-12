@@ -84,6 +84,7 @@ std::map<std::string, Property> properties = {
     {"monopolar",     {Classes::isMonopolar,                                        true,  true}},
     {"odd-hole-free", {[](const Graph& g) { return !Subgraph::hasOddHole(g); },     true,  true}},
     {"meyniel",       {Classes::isMeyniel,                                          true,  true}},
+    {"gallai",        {Classes::isGallai,                                           true,  true}},
     {"perfect",       {Classes::isPerfect,                                          true,  true}},
     {"well-covered",  {Classes::isWellCovered,                                      false, true}},
     {"prime",         {Classes::isPrime,                                            false, false}},

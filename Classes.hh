@@ -56,6 +56,7 @@ bool isTwoSplit(const Graph& g);
 bool isPlanar(const Graph& g);
 bool isCograph(const Graph& g);
 bool isMeyniel(const Graph& g);
+bool isGallai(const Graph& g);
 
 bool isTwoVertexConnected(const Graph& g);
 bool isTwoEdgeConnected(const Graph& g);
