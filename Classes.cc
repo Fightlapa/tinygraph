@@ -723,8 +723,7 @@ bool gallaiExtend(const Graph& g, int l, int r, std::vector<int> lSide, std::vec
     for (int l2 : lPool) {
         uncrossingEdgesFound = preL2UncrossingEdges;
         std::vector<std::pair<int, int>> lEdges;
-        std::vector<int> newLSide(lSide);
-        newLSide.push_back(l2);
+        lSide.push_back(l2);
 
 		if (g.hasEdge(l2, u))
 		{
@@ -817,15 +816,17 @@ bool gallaiExtend(const Graph& g, int l, int r, std::vector<int> lSide, std::vec
 				}
 			}
 			else {
-				std::vector<std::pair<int, int>> newInnerEdges(innerEdges);
-				newInnerEdges.insert(newInnerEdges.end(), lEdges.begin(), lEdges.end());
-				newInnerEdges.insert(newInnerEdges.end(), rEdges.begin(), rEdges.end());
-				std::vector<int> newRSide(rSide);
-				newRSide.push_back(r2);
-				if (!gallaiExtend(g, l2, r2, newLSide, newRSide, (out + l2 + r2), newInnerEdges, uncrossingEdgesFound, u))
-                    return false;
+				size_t beforeSize = innerEdges.size();
+				innerEdges.insert(innerEdges.end(), lEdges.begin(), lEdges.end());
+				innerEdges.insert(innerEdges.end(), rEdges.begin(), rEdges.end());
+				rSide.push_back(r2);
+				if (!gallaiExtend(g, l2, r2, lSide, rSide, (out + l2 + r2), innerEdges, uncrossingEdgesFound, u))
+					return false;
+				innerEdges.erase(innerEdges.begin() + beforeSize, innerEdges.end());
+				rSide.pop_back();
             }
         }
+        lSide.pop_back();
     }
     return true;
 }
@@ -833,12 +834,12 @@ bool gallaiExtend(const Graph& g, int l, int r, std::vector<int> lSide, std::vec
 
 
 bool isGallai(const Graph& g) {
+	std::vector<int> lSide;
+	std::vector<int> rSide;
     for (int u = 0; u < g.n() - 4; ++u) {
         for (int l : g.neighbors(u).above(u)) {
-            std::vector<int> lSide;
             lSide.push_back(l);
             for (int r : g.neighbors(u).above(l)) {
-                std::vector<int> rSide;
                 std::vector<std::pair<int, int>> innerEdges;
                 if (g.hasEdge(l, r))
                 {
@@ -850,7 +851,9 @@ bool isGallai(const Graph& g) {
                 {
                     return false;
                 }
+                rSide.pop_back();
             }
+            lSide.pop_back();
         }
     }
     return true;
